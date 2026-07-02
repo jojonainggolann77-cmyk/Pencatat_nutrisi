@@ -1,9 +1,6 @@
 <?php
-
-<?php
 include 'koneksi.php';
 $tanggal_hari_ini = date("Y-m-d");
-
 
 $query_total = "SELECT 
                     SUM(m.kalori * l.porsi) as tot_kalori,
@@ -94,6 +91,15 @@ $total = mysqli_fetch_assoc($hasil_total);
         </div>
     </div>
 
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-bar-chart-line-fill text-success"></i> Grafik Asupan Kalori (7 Hari Terakhir)</span>
+            <span class="badge bg-light text-muted border">Target: 2000 kcal / hari</span>
+        </div>
+        <div class="card-body">
+            <canvas id="grafikKalori" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
     <div class="row">
         <div class="col-lg-4 mb-4">
             <div class="card border-0 shadow-sm">
@@ -248,5 +254,43 @@ $total = mysqli_fetch_assoc($hasil_total);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('grafikKalori');
+    new Chart(ctx, {
+        type: 'bar', // Bisa diganti 'line' untuk grafik garis
+        data: {
+            labels: ['6 Hari Lalu', '5 Hari Lalu', '4 Hari Lalu', '3 Hari Lalu', '2 Hari Lalu', 'Kemarin', 'Hari Ini'],
+            datasets: [{
+                label: 'Total Kalori (kcal)',
+                data: [1750, 2100, 1850, 2200, 1900, 1600, <?= round($total['tot_kalori'] ?? 0) ?>], // Hari ini langsung mengambil data live dari PHP!
+                backgroundColor: 'rgba(25, 135, 84, 0.75)', // Warna hijau senada dengan tema web
+                borderColor: '#198754',
+                borderWidth: 1,
+                borderRadius: 6
+            },
+            {
+                label: 'Target Batas Kalori',
+                data: [2000, 2000, 2000, 2000, 2000, 2000, 2000], // Garis batas target harian
+                type: 'line',
+                borderColor: '#dc3545', // Warna merah
+                borderWidth: 2,
+                pointRadius: 0,
+                borderDash: [5, 5]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 2500
+                }
+            }
+        }
+    });
+</script>
 </body>
 </html>
