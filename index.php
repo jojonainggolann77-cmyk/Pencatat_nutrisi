@@ -2,7 +2,6 @@
 session_start(); 
 include 'koneksi.php';
 
-
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -11,13 +10,11 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $tanggal_hari_ini = date("Y-m-d");
 
-
 $query_user = mysqli_query($koneksi, "SELECT * FROM users WHERE id = '$user_id'");
 $data_user = mysqli_fetch_assoc($query_user);
 
 $target_kalori = $data_user['target_kalori'] ?? 2000;
 $tujuan = $data_user['tujuan'] ?? '';
-
 
 if ($tujuan == 'Membentuk Otot') {
     $target_protein = ($target_kalori * 0.35) / 4;  
@@ -46,9 +43,14 @@ $query_total = "SELECT
 $hasil_total = mysqli_query($koneksi, $query_total);
 $total = mysqli_fetch_assoc($hasil_total);
 
-
 $tot_kalori_saat_ini = round($total['tot_kalori'] ?? 0);
 $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $target_kalori) * 100), 100) : 0;
+
+// Query total air minum hari ini
+$query_air = mysqli_query($koneksi, "SELECT SUM(jml_gelas) as tot_air FROM log_air WHERE tanggal = '$tanggal_hari_ini' AND user_id = '$user_id'");
+$data_air = mysqli_fetch_assoc($query_air);
+$jml_air = $data_air['tot_air'] ?? 0;
+$persen_air = min(round(($jml_air / 8) * 100), 100);
 ?>
 
 <!DOCTYPE html>
@@ -80,7 +82,7 @@ $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $t
             </span>
             <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Keluar</a>
         </div>
-        </div>
+    </div>
 </nav>
 
 <div class="container my-4">
@@ -93,6 +95,7 @@ $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $t
                 elseif($_GET['pesan'] == 'log_ditambah') echo "Asupan makanan berhasil dicatat!";
                 elseif($_GET['pesan'] == 'log_diupdate') echo "Porsi makanan berhasil diperbarui!";
                 elseif($_GET['pesan'] == 'log_dihapus') echo "Catatan asupan berhasil dihapus!";
+                elseif($_GET['pesan'] == 'air_ditambah') echo "Asupan air minum berhasil ditambahkan!";
             ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -147,6 +150,21 @@ $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $t
     
     <div class="row">
         <div class="col-lg-4 mb-4">
+            
+            <div class="card border-0 shadow-sm mb-4 bg-primary text-white">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold"><i class="bi bi-droplet-fill text-info"></i> Hidrasi Air Minum</span>
+                        <span class="badge bg-white text-primary fw-bold"><?= $jml_air ?> / 8 Gelas</span>
+                    </div>
+                    <div class="progress bg-dark bg-opacity-25 mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: <?= $persen_air ?>%;"></div>
+                    </div>
+                    <a href="tambah_air.php" class="btn btn-light btn-sm w-100 fw-bold text-primary shadow-sm">
+                        <i class="bi bi-plus-lg"></i> Minum +1 Gelas Air (250ml)
+                    </a>
+                </div>
+            </div>
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white fw-bold py-3">
                     <i class="bi bi-plus-circle-fill text-success"></i> Catat Makanan Kamu
@@ -318,7 +336,6 @@ $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $t
             },
             {
                 label: 'Target Batas Kalori',
-             
                 data: Array(7).fill(targetKaloriUser), 
                 type: 'line',
                 borderColor: '#dc3545', 
@@ -333,7 +350,6 @@ $persentase_kalori = ($target_kalori > 0) ? min(round(($tot_kalori_saat_ini / $t
             scales: {
                 y: {
                     beginAtZero: true,
-                   
                     max: Math.max(2500, Math.round(targetKaloriUser * 1.2)) 
                 }
             }
