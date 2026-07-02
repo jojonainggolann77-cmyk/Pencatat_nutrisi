@@ -1,6 +1,15 @@
 <?php
+session_start(); 
 include 'koneksi.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
 $tanggal_hari_ini = date("Y-m-d");
+$user_id = $_SESSION['user_id'];
+$target_kalori_user = $_SESSION['target_kalori'];
 
 $query_total = "SELECT 
                     SUM(m.kalori * l.porsi) as tot_kalori,
@@ -10,7 +19,7 @@ $query_total = "SELECT
                     SUM(m.serat * l.porsi) as tot_serat
                 FROM log_harian l
                 JOIN makanan m ON l.makanan_id = m.id
-                WHERE l.tanggal = '$tanggal_hari_ini'";
+                WHERE l.tanggal = '$tanggal_hari_ini' AND l.user_id = '$user_id'";
 $hasil_total = mysqli_query($koneksi, $query_total);
 $total = mysqli_fetch_assoc($hasil_total);
 ?>
@@ -33,9 +42,13 @@ $total = mysqli_fetch_assoc($hasil_total);
 <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="#"><i class="bi bi-apple"></i> FatTracker</a>
-        <span class="navbar-text text-white-50">
-            <i class="bi bi-calendar-check"></i> Hari ini: <strong><?= date("d M Y") ?></strong>
-        </span>
+        
+        <div class="d-flex align-items-center">
+            <span class="navbar-text text-white me-3">
+                Halo, <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>!
+            </span>
+            <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Keluar</a>
+        </div>
     </div>
 </nav>
 
@@ -159,10 +172,10 @@ $total = mysqli_fetch_assoc($hasil_total);
                             </thead>
                             <tbody>
                                 <?php
-                                $query_log = "SELECT l.id as log_id, l.porsi, m.* FROM log_harian l 
-                                              JOIN makanan m ON l.makanan_id = m.id 
-                                              WHERE l.tanggal = '$tanggal_hari_ini' 
-                                              ORDER BY l.id DESC";
+                               $query_log = "SELECT l.id as log_id, l.porsi, m.* FROM       log_harian l
+                               JOIN makanan m ON l.makanan_id = m.id 
+                               WHERE l.tanggal = '$tanggal_hari_ini' AND l.user_id = '$user_id' 
+                               ORDER BY l.id DESC";
                                 $hasil_log = mysqli_query($koneksi, $query_log);
 
                                 if(mysqli_num_rows($hasil_log) == 0) {
